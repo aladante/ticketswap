@@ -1,6 +1,5 @@
 # coding: utf-8
 
-from twilio.rest import Client
 from bs4 import BeautifulSoup
 import re
 import requests
@@ -9,22 +8,19 @@ import os
 import json
 
 # TOKEN et SESSION = COOKIE À RECUP DANS BURP
-TOKEN = "A_REMPLIR"
-SESSION = "A_REMPLIR"
+TOKEN = "OWI4NjQ1N2M1MGJjNGQ3MGRiMTc4MTMyNzMxZWNhMDAyNTU1NmJiOGQ3MzQ4YmY4ZjkxNTBjNDExYjczNTM1Mg"
+SESSION = "-1W3ogwpzEKQJ8UDArtg9"
+
 
 COOKIES={"session": SESSION,
         "token": TOKEN
         }
 
 # URL DE L'EVENEMENT OU DE NIMPORTE QUEL TYPE DE TICKET DE L'EVENT
-URL = "https://www.ticketswap.com/event/waking-life-2019/regular/f3daf6fc-3966-4277-b8be-a982478dfa24/1089959"
+URL = "https://www.ticketswap.nl/event/shelter-festimi-x-cooking-with-palms-trax-ade/84277786-1716-4f91-b073-788905efcea9"
 
 # POUR RESERVER FAUT SADRESSER A UNE API
 RESERVEURL="http://api.ticketswap.com/graphql/public/batch"
-
-# TWILIO ACCESS POUR ENVOYER SMS
-ACCOUNT_SID = "A_REMPLIR"
-AUTH_TOKEN = "A_REMPLIR"
 
 #FAIRE DU BRUIT
 def beep():
@@ -34,7 +30,7 @@ def beep():
 
 # PARSER LES TICKETS POUR VOIR CE QUI SONT DISPO
 def parseTickets(soup):
-    
+
     #TOUTES LES DONNÉES SE TROUVENT DANS UNE BALISE SCRIPT. C'est ptetre pour ca que c'est un peu lent parfois
     try:
         extracted = soup.find("script", {"id": "__NEXT_DATA__"}).get_text("",strip=True)
@@ -43,7 +39,7 @@ def parseTickets(soup):
         print('An error occurred: '+ error)
 
     #REGEX DEGUEU POUR PARSER LE JSON ET TROUVER LES BILLETS QUI SONT DISPO
-    tickets = resJSON['props']['pageProps']['data']['node']['event']['types']['edges']
+    tickets = resJSON['props']['pageProps']['data']['node']['types']['edges']
     for yo in tickets:
         available = yo['node']['availableTicketsCount']
         title = yo['node']['title']
@@ -51,8 +47,8 @@ def parseTickets(soup):
         #print available
 
         # ICI ON CHECK QUE LES TICKETS SONT DISPO ET ON PEUT EXCLURE CERTAINE CATÉGORIE DE TICKET. MOI J'AI EXCLU CEUX OU YA ECRIT SHUTTLEBUS /!\ CASE SENSITIVE
-        if available != '0' and available and "Shuttlebus" not in title:    
-            print title
+        if available != '0' and available and "Shuttlebus" not in title:
+            print (title)
             yoyo = yo['node']['availableListings']['edges']
             for we in yoyo:
 
@@ -65,20 +61,20 @@ def parseTickets(soup):
                 reserveTicket(Id,token)
                 #beep()
                 break
-            
-        
+
+
 def reserveTicket(Id,token):
-    
+
     # HEADER A FOURNIR
     header={'Authorization': 'Bearer ' + TOKEN}
-    
+
     # LES PARAMETRES POST SONT JSON, FAUT DONC LES SOUMETTRE COMME SUIT AVEC json=data au moment de la requete post
     data = [{"operationName":"addTicketsToCart","variables":{"input":{"listingId":token,"listingHash":Id,"amountOfTickets":1}},"query":"mutation addTicketsToCart($input: AddTicketsToCartInput!) {\n  addTicketsToCart(input: $input) {\n    cart {\n      id\n      __typename\n    }\n    errors {\n      code\n      message\n      __typename\n    }\n    __typename\n  }\n}\n"}]
 
     req = requests.post(RESERVEURL, headers=header, json=data)
     rep = req.text
-    print rep
-    
+    print (rep)
+
     # SI YA PAS EU D'ERREUR SEND SMS
     if "NoTicketsCouldBeReservedError" not in rep:
         beep()
@@ -86,12 +82,7 @@ def reserveTicket(Id,token):
 
 
 def sendSMS():
-    client = Client(ACCOUNT_SID, AUTH_TOKEN)
-    client.messages.create(
-    to="NUM_DESTINATAIRE",
-    from_="NUM_TWILIO",
-    body="WEWEWE C BUEN"
-    )
+    print("U got a tickettttt")
 
 def main():
     s = requests.Session()
@@ -110,7 +101,7 @@ def main():
             bar = "=>"
             i = 0
             print(bar)
-        
+
         #SLEEP POUR EVITER QUE CE SOIT TROP RALENTIT
         time.sleep(1)
 
